@@ -16,6 +16,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          # SECURITY: Always pin to the base branch ref when using pull_request_target.
+          # Never checkout github.head_ref — that is attacker-controlled on public repos.
+          # See: https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
+          ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
       - name: Compute Labels
         id: compute-labels
