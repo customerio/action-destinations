@@ -1,4 +1,4 @@
-import { resolveIdentifiers } from '../utils'
+import { buildPayload, resolveIdentifiers } from '../utils'
 
 describe('resolveIdentifiers', () => {
   it('should return object_id and object_type_id if both are provided', () => {
@@ -39,5 +39,42 @@ describe('resolveIdentifiers', () => {
 
   it('should return undefined if no identifiers are provided', () => {
     expect(resolveIdentifiers({})).toBeUndefined()
+  })
+})
+
+describe('buildPayload', () => {
+  const settings = {}
+
+  it('should add customer_ip to the root of identify requests', () => {
+    const body = buildPayload({
+      settings,
+      type: 'person',
+      action: 'identify',
+      payload: { person_id: 'abc123', customer_ip: '203.0.113.9', attributes: { name: 'Test' } }
+    })
+
+    expect(body).toEqual({
+      type: 'person',
+      action: 'identify',
+      customer_ip: '203.0.113.9',
+      attributes: { name: 'Test' },
+      identifiers: { id: 'abc123' }
+    })
+  })
+
+  it('should not add customer_ip to other actions', () => {
+    const body = buildPayload({
+      settings,
+      type: 'person',
+      action: 'event',
+      payload: { person_id: 'abc123', customer_ip: '203.0.113.9', name: 'purchase' }
+    })
+
+    expect(body).toEqual({
+      type: 'person',
+      action: 'event',
+      name: 'purchase',
+      identifiers: { id: 'abc123' }
+    })
   })
 })

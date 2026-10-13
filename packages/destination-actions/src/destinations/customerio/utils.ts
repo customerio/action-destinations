@@ -109,6 +109,7 @@ type Identifiers = {
 type BasePayload = {
   anonymous_id?: string
   convert_timestamp?: boolean
+  customer_ip?: string
   email?: string
   object_id?: string
   object_type_id?: string
@@ -119,7 +120,17 @@ type BasePayload = {
 }
 
 export const buildPayload = <Payload extends BasePayload>({ action, type, payload }: RequestPayload<Payload>) => {
-  const { convert_timestamp, person_id, anonymous_id, email, object_id, object_type_id, timestamp, ...data } = payload
+  const {
+    convert_timestamp,
+    customer_ip,
+    person_id,
+    anonymous_id,
+    email,
+    object_id,
+    object_type_id,
+    timestamp,
+    ...data
+  } = payload
   let rest = data
 
   if ('convert_timestamp' in payload && convert_timestamp !== false) {
@@ -137,12 +148,18 @@ export const buildPayload = <Payload extends BasePayload>({ action, type, payloa
     identifiers?: Identifiers
     type: string
     action: string
+    customer_ip?: string
     object_id?: string
     object_type_id?: string
   } = {
     type,
     action,
     ...rest
+  }
+
+  // Customer.io reads the IP for geolocation from the root of identify requests only.
+  if (action === 'identify' && customer_ip) {
+    body.customer_ip = customer_ip
   }
 
   if (anonymous_id) {
