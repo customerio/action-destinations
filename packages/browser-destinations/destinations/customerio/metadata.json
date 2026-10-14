@@ -1,0 +1,413 @@
+{
+  "slug": "actions-customerio-web",
+  "name": "Customer.io Web (Actions)",
+  "mode": "device",
+  "description": "Load the Customer.io JavaScript snippet in the browser to identify people, send events and page views, and display Customer.io web in-app messages.",
+  "authentication": {
+    "scheme": "custom",
+    "fields": {
+      "siteId": {
+        "label": "Site ID",
+        "description": "Your Customer.io workspace Site ID, shown in the JavaScript snippet under Integrations > Customer.io API.",
+        "type": "string",
+        "required": true,
+        "multiple": false,
+        "choices": null,
+        "default": null,
+        "depends_on": null
+      },
+      "region": {
+        "label": "Region",
+        "description": "The region your Customer.io account is hosted in. EU accounts load track-eu.js.",
+        "type": "string",
+        "required": true,
+        "multiple": false,
+        "choices": [
+          {
+            "label": "US",
+            "value": "US"
+          },
+          {
+            "label": "EU",
+            "value": "EU"
+          }
+        ],
+        "default": "US",
+        "depends_on": null
+      },
+      "useInApp": {
+        "label": "Enable In-App Messages",
+        "description": "Load the Customer.io in-app messaging plugin (sets data-use-in-app=\"true\"). In-app messaging must also be enabled in your Customer.io workspace, and people must be identified to receive messages.",
+        "type": "boolean",
+        "required": false,
+        "multiple": false,
+        "choices": null,
+        "default": true,
+        "depends_on": null
+      },
+      "autoTrackPage": {
+        "label": "Automatically Track Page Views",
+        "description": "When enabled, the Customer.io snippet sends its own page view when it loads (data-auto-track-page). Leave disabled if the Track Page action forwards Segment page calls, to avoid duplicate page views.",
+        "type": "boolean",
+        "required": false,
+        "multiple": false,
+        "choices": null,
+        "default": false,
+        "depends_on": null
+      },
+      "useArrayParams": {
+        "label": "Preserve Arrays",
+        "description": "When enabled (data-use-array-params=\"true\"), arrays in identify and track calls keep their shape. When disabled, Customer.io converts arrays into objects keyed by index.",
+        "type": "boolean",
+        "required": false,
+        "multiple": false,
+        "choices": null,
+        "default": true,
+        "depends_on": null
+      },
+      "crossSiteSupport": {
+        "label": "Cross-Site Cookie Support",
+        "description": "When enabled (data-cross-site-support=\"true\"), the snippet can set cookies from iframes within third-party domains, such as Shopify.",
+        "type": "boolean",
+        "required": false,
+        "multiple": false,
+        "choices": null,
+        "default": false,
+        "depends_on": null
+      },
+      "enableInMemoryStorage": {
+        "label": "In-Memory Storage Fallback",
+        "description": "When enabled (data-enable-in-memory-storage=\"true\"), the snippet stores identity in memory when cookies are unavailable.",
+        "type": "boolean",
+        "required": false,
+        "multiple": false,
+        "choices": null,
+        "default": false,
+        "depends_on": null
+      }
+    }
+  },
+  "audienceConfig": null,
+  "actions": {
+    "identifyUser": {
+      "title": "Identify User",
+      "description": "Identify a person in Customer.io and update their attributes. People must be identified to receive web in-app messages.",
+      "platform": "web",
+      "defaultSubscription": "type = \"identify\"",
+      "hidden": false,
+      "hasPerformBatch": false,
+      "syncMode": null,
+      "hooks": null,
+      "dynamicFields": null,
+      "fields": {
+        "userId": {
+          "label": "Person ID",
+          "description": "The ID that identifies the person in Customer.io. If empty, the email address is used as the ID, which Customer.io detects as an email identifier.",
+          "type": "string",
+          "required": false,
+          "multiple": false,
+          "allowNull": false,
+          "dynamic": false,
+          "default": {
+            "@path": "$.userId"
+          },
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": null,
+          "minimum": null,
+          "maximum": null,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": null,
+          "additionalProperties": false
+        },
+        "email": {
+          "label": "Email Address",
+          "description": "The person's email address. Used as the ID when Person ID is empty.",
+          "type": "string",
+          "required": false,
+          "multiple": false,
+          "allowNull": false,
+          "dynamic": false,
+          "default": {
+            "@path": "$.traits.email"
+          },
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": null,
+          "minimum": null,
+          "maximum": null,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": "email",
+          "additionalProperties": false
+        },
+        "createdAt": {
+          "label": "Created At",
+          "description": "When the person was first created. Converted to a Unix timestamp (seconds) and sent as `created_at`. Customer.io recommends sending this only when you first identify someone.",
+          "type": "datetime",
+          "required": false,
+          "multiple": false,
+          "allowNull": false,
+          "dynamic": false,
+          "default": {
+            "@if": {
+              "exists": {
+                "@path": "$.traits.created_at"
+              },
+              "then": {
+                "@path": "$.traits.created_at"
+              },
+              "else": {
+                "@path": "$.traits.createdAt"
+              }
+            }
+          },
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": null,
+          "minimum": null,
+          "maximum": null,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": null,
+          "additionalProperties": false
+        },
+        "attributes": {
+          "label": "Person Attributes",
+          "description": "Attributes to set on the person in Customer.io.",
+          "type": "object",
+          "required": false,
+          "multiple": false,
+          "allowNull": false,
+          "dynamic": false,
+          "default": {
+            "@path": "$.traits"
+          },
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": null,
+          "minimum": null,
+          "maximum": null,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": null,
+          "additionalProperties": false
+        }
+      }
+    },
+    "trackEvent": {
+      "title": "Track Event",
+      "description": "Send a custom event to Customer.io. Events sent before a person is identified are attributed to an anonymous visitor and merged when they are identified.",
+      "platform": "web",
+      "defaultSubscription": "type = \"track\"",
+      "hidden": false,
+      "hasPerformBatch": false,
+      "syncMode": null,
+      "hooks": null,
+      "dynamicFields": null,
+      "fields": {
+        "name": {
+          "label": "Event Name",
+          "description": "The name of the event.",
+          "type": "string",
+          "required": true,
+          "multiple": false,
+          "allowNull": false,
+          "dynamic": false,
+          "default": {
+            "@path": "$.event"
+          },
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": null,
+          "minimum": null,
+          "maximum": null,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": null,
+          "additionalProperties": false
+        },
+        "properties": {
+          "label": "Event Properties",
+          "description": "Additional data to send with the event.",
+          "type": "object",
+          "required": false,
+          "multiple": false,
+          "allowNull": false,
+          "dynamic": false,
+          "default": {
+            "@path": "$.properties"
+          },
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": null,
+          "minimum": null,
+          "maximum": null,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": null,
+          "additionalProperties": false
+        }
+      }
+    },
+    "trackPage": {
+      "title": "Track Page",
+      "description": "Send a page view to Customer.io. Web in-app message page rules match against the page name, so single-page apps should forward every page call.",
+      "platform": "web",
+      "defaultSubscription": "type = \"page\"",
+      "hidden": false,
+      "hasPerformBatch": false,
+      "syncMode": null,
+      "hooks": null,
+      "dynamicFields": null,
+      "fields": {
+        "name": {
+          "label": "Page Name",
+          "description": "The page name sent to Customer.io. Defaults to the page URL, which is what the Customer.io snippet uses for its own page views and what in-app page rules match against. If empty, the snippet uses the current URL.",
+          "type": "string",
+          "required": false,
+          "multiple": false,
+          "allowNull": false,
+          "dynamic": false,
+          "default": {
+            "@path": "$.context.page.url"
+          },
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": null,
+          "minimum": null,
+          "maximum": null,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": null,
+          "additionalProperties": false
+        },
+        "properties": {
+          "label": "Page Properties",
+          "description": "Additional data to send with the page view.",
+          "type": "object",
+          "required": false,
+          "multiple": false,
+          "allowNull": false,
+          "dynamic": false,
+          "default": {
+            "@path": "$.properties"
+          },
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": null,
+          "minimum": null,
+          "maximum": null,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": null,
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "presets": [
+    {
+      "name": "Identify User",
+      "type": "automatic",
+      "partnerAction": "identifyUser",
+      "subscribe": "type = \"identify\"",
+      "mapping": {
+        "userId": {
+          "@path": "$.userId"
+        },
+        "email": {
+          "@path": "$.traits.email"
+        },
+        "createdAt": {
+          "@if": {
+            "exists": {
+              "@path": "$.traits.created_at"
+            },
+            "then": {
+              "@path": "$.traits.created_at"
+            },
+            "else": {
+              "@path": "$.traits.createdAt"
+            }
+          }
+        },
+        "attributes": {
+          "@path": "$.traits"
+        }
+      },
+      "eventSlug": null
+    },
+    {
+      "name": "Track Event",
+      "type": "automatic",
+      "partnerAction": "trackEvent",
+      "subscribe": "type = \"track\"",
+      "mapping": {
+        "name": {
+          "@path": "$.event"
+        },
+        "properties": {
+          "@path": "$.properties"
+        }
+      },
+      "eventSlug": null
+    },
+    {
+      "name": "Track Page",
+      "type": "automatic",
+      "partnerAction": "trackPage",
+      "subscribe": "type = \"page\"",
+      "mapping": {
+        "name": {
+          "@path": "$.context.page.url"
+        },
+        "properties": {
+          "@path": "$.properties"
+        }
+      },
+      "eventSlug": null
+    }
+  ]
+}
