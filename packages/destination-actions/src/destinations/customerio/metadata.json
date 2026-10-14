@@ -43,10 +43,38 @@
         ],
         "default": "US 🇺🇸",
         "depends_on": null
+      },
+      "appApiKey": {
+        "label": "App API Key",
+        "description": "Customer.io App API key. Required to automatically create a manual segment for each Engage audience; optional if you enter an existing segment ID on each audience. Only used to create and look up segments. This can be found on your [API Credentials page](https://fly.customer.io/settings/api_credentials?keyType=app).",
+        "type": "password",
+        "required": false,
+        "multiple": false,
+        "choices": null,
+        "default": null,
+        "depends_on": null
       }
     }
   },
-  "audienceConfig": null,
+  "audienceConfig": {
+    "mode": {
+      "type": "synced",
+      "full_audience_sync": false
+    },
+    "audienceFields": {
+      "segmentId": {
+        "label": "Segment ID",
+        "description": "The numeric ID of an existing Customer.io manual segment to sync this audience to. If empty, a new manual segment named after the audience is created (requires an App API Key).",
+        "type": "string",
+        "required": false,
+        "multiple": false,
+        "choices": null,
+        "default": null,
+        "depends_on": null
+      }
+    },
+    "supportsAudienceFunctions": true
+  },
   "actions": {
     "createUpdateDevice": {
       "title": "Create or Update Device",
@@ -2932,6 +2960,376 @@
           "additionalProperties": false
         }
       }
+    },
+    "addToSegment": {
+      "title": "Add Person to Segment",
+      "description": "Add a person to a Customer.io manual segment, such as the segment synced from an Engage audience.",
+      "platform": "cloud",
+      "defaultSubscription": "event = \"Audience Entered\"",
+      "hidden": false,
+      "hasPerformBatch": true,
+      "syncMode": null,
+      "hooks": null,
+      "dynamicFields": null,
+      "fields": {
+        "person_id": {
+          "label": "Person ID",
+          "description": "The ID used to uniquely identify a person in Customer.io. A value prefixed with `cio_` is sent as a Customer.io ID and an email address is sent as an email. [Learn more](https://customer.io/docs/identifying-people/#identifiers).",
+          "type": "string",
+          "required": false,
+          "multiple": false,
+          "allowNull": false,
+          "dynamic": false,
+          "default": {
+            "@path": "$.userId"
+          },
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": null,
+          "minimum": null,
+          "maximum": null,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": null,
+          "additionalProperties": false
+        },
+        "email": {
+          "label": "Email",
+          "description": "The email address of the person. Used only when Person ID is empty.",
+          "type": "string",
+          "required": false,
+          "multiple": false,
+          "allowNull": false,
+          "dynamic": false,
+          "default": {
+            "@if": {
+              "exists": {
+                "@path": "$.context.traits.email"
+              },
+              "then": {
+                "@path": "$.context.traits.email"
+              },
+              "else": {
+                "@path": "$.properties.email"
+              }
+            }
+          },
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": null,
+          "minimum": null,
+          "maximum": null,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": null,
+          "additionalProperties": false
+        },
+        "segment_id": {
+          "label": "Segment ID",
+          "description": "The numeric ID of the Customer.io manual segment. Defaults to the segment linked to the Engage audience.",
+          "type": "string",
+          "required": true,
+          "multiple": false,
+          "allowNull": false,
+          "dynamic": false,
+          "default": {
+            "@if": {
+              "exists": {
+                "@path": "$.context.personas.audience_settings.segmentId"
+              },
+              "then": {
+                "@path": "$.context.personas.audience_settings.segmentId"
+              },
+              "else": {
+                "@path": "$.context.personas.external_audience_id"
+              }
+            }
+          },
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": null,
+          "minimum": null,
+          "maximum": null,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": null,
+          "additionalProperties": false
+        },
+        "enable_batching": {
+          "label": "Batch Data to Customer.io",
+          "description": "Send people to Customer.io in batches.",
+          "type": "boolean",
+          "required": false,
+          "multiple": false,
+          "allowNull": false,
+          "dynamic": false,
+          "default": true,
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": null,
+          "minimum": null,
+          "maximum": null,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": null,
+          "additionalProperties": false
+        },
+        "batch_size": {
+          "label": "Batch Size",
+          "description": "Maximum number of people to include in each batch. Customer.io accepts at most 1000 IDs per request.",
+          "type": "number",
+          "required": false,
+          "multiple": false,
+          "allowNull": false,
+          "dynamic": false,
+          "default": 1000,
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": true,
+          "minimum": 1,
+          "maximum": 1000,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": null,
+          "additionalProperties": false
+        },
+        "batch_keys": {
+          "label": "Batch Keys",
+          "description": "The keys to use for batching the events.",
+          "type": "string",
+          "required": false,
+          "multiple": true,
+          "allowNull": false,
+          "dynamic": false,
+          "default": [
+            "segment_id"
+          ],
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": true,
+          "minimum": null,
+          "maximum": null,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": null,
+          "additionalProperties": false
+        }
+      }
+    },
+    "removeFromSegment": {
+      "title": "Remove Person from Segment",
+      "description": "Remove a person from a Customer.io manual segment, such as the segment synced from an Engage audience.",
+      "platform": "cloud",
+      "defaultSubscription": "event = \"Audience Exited\"",
+      "hidden": false,
+      "hasPerformBatch": true,
+      "syncMode": null,
+      "hooks": null,
+      "dynamicFields": null,
+      "fields": {
+        "person_id": {
+          "label": "Person ID",
+          "description": "The ID used to uniquely identify a person in Customer.io. A value prefixed with `cio_` is sent as a Customer.io ID and an email address is sent as an email. [Learn more](https://customer.io/docs/identifying-people/#identifiers).",
+          "type": "string",
+          "required": false,
+          "multiple": false,
+          "allowNull": false,
+          "dynamic": false,
+          "default": {
+            "@path": "$.userId"
+          },
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": null,
+          "minimum": null,
+          "maximum": null,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": null,
+          "additionalProperties": false
+        },
+        "email": {
+          "label": "Email",
+          "description": "The email address of the person. Used only when Person ID is empty.",
+          "type": "string",
+          "required": false,
+          "multiple": false,
+          "allowNull": false,
+          "dynamic": false,
+          "default": {
+            "@if": {
+              "exists": {
+                "@path": "$.context.traits.email"
+              },
+              "then": {
+                "@path": "$.context.traits.email"
+              },
+              "else": {
+                "@path": "$.properties.email"
+              }
+            }
+          },
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": null,
+          "minimum": null,
+          "maximum": null,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": null,
+          "additionalProperties": false
+        },
+        "segment_id": {
+          "label": "Segment ID",
+          "description": "The numeric ID of the Customer.io manual segment. Defaults to the segment linked to the Engage audience.",
+          "type": "string",
+          "required": true,
+          "multiple": false,
+          "allowNull": false,
+          "dynamic": false,
+          "default": {
+            "@if": {
+              "exists": {
+                "@path": "$.context.personas.audience_settings.segmentId"
+              },
+              "then": {
+                "@path": "$.context.personas.audience_settings.segmentId"
+              },
+              "else": {
+                "@path": "$.context.personas.external_audience_id"
+              }
+            }
+          },
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": null,
+          "minimum": null,
+          "maximum": null,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": null,
+          "additionalProperties": false
+        },
+        "enable_batching": {
+          "label": "Batch Data to Customer.io",
+          "description": "Send people to Customer.io in batches.",
+          "type": "boolean",
+          "required": false,
+          "multiple": false,
+          "allowNull": false,
+          "dynamic": false,
+          "default": true,
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": null,
+          "minimum": null,
+          "maximum": null,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": null,
+          "additionalProperties": false
+        },
+        "batch_size": {
+          "label": "Batch Size",
+          "description": "Maximum number of people to include in each batch. Customer.io accepts at most 1000 IDs per request.",
+          "type": "number",
+          "required": false,
+          "multiple": false,
+          "allowNull": false,
+          "dynamic": false,
+          "default": 1000,
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": true,
+          "minimum": 1,
+          "maximum": 1000,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": null,
+          "additionalProperties": false
+        },
+        "batch_keys": {
+          "label": "Batch Keys",
+          "description": "The keys to use for batching the events.",
+          "type": "string",
+          "required": false,
+          "multiple": true,
+          "allowNull": false,
+          "dynamic": false,
+          "default": [
+            "segment_id"
+          ],
+          "choices": null,
+          "placeholder": null,
+          "properties": null,
+          "category": null,
+          "depends_on": null,
+          "readOnly": null,
+          "hidden": true,
+          "minimum": null,
+          "maximum": null,
+          "defaultObjectUI": null,
+          "disabledInputMethods": null,
+          "displayMode": null,
+          "format": null,
+          "additionalProperties": false
+        }
+      }
     }
   },
   "presets": [
@@ -3584,6 +3982,176 @@
         "batch_size": 50
       },
       "eventSlug": "journeys_step_entered_track"
+    },
+    {
+      "name": "Audience Entered",
+      "type": "automatic",
+      "partnerAction": "addToSegment",
+      "subscribe": "event = \"Audience Entered\"",
+      "mapping": {
+        "person_id": {
+          "@path": "$.userId"
+        },
+        "email": {
+          "@if": {
+            "exists": {
+              "@path": "$.context.traits.email"
+            },
+            "then": {
+              "@path": "$.context.traits.email"
+            },
+            "else": {
+              "@path": "$.properties.email"
+            }
+          }
+        },
+        "segment_id": {
+          "@if": {
+            "exists": {
+              "@path": "$.context.personas.audience_settings.segmentId"
+            },
+            "then": {
+              "@path": "$.context.personas.audience_settings.segmentId"
+            },
+            "else": {
+              "@path": "$.context.personas.external_audience_id"
+            }
+          }
+        },
+        "enable_batching": true,
+        "batch_size": 1000,
+        "batch_keys": [
+          "segment_id"
+        ]
+      },
+      "eventSlug": null
+    },
+    {
+      "name": "Audience Exited",
+      "type": "automatic",
+      "partnerAction": "removeFromSegment",
+      "subscribe": "event = \"Audience Exited\"",
+      "mapping": {
+        "person_id": {
+          "@path": "$.userId"
+        },
+        "email": {
+          "@if": {
+            "exists": {
+              "@path": "$.context.traits.email"
+            },
+            "then": {
+              "@path": "$.context.traits.email"
+            },
+            "else": {
+              "@path": "$.properties.email"
+            }
+          }
+        },
+        "segment_id": {
+          "@if": {
+            "exists": {
+              "@path": "$.context.personas.audience_settings.segmentId"
+            },
+            "then": {
+              "@path": "$.context.personas.audience_settings.segmentId"
+            },
+            "else": {
+              "@path": "$.context.personas.external_audience_id"
+            }
+          }
+        },
+        "enable_batching": true,
+        "batch_size": 1000,
+        "batch_keys": [
+          "segment_id"
+        ]
+      },
+      "eventSlug": null
+    },
+    {
+      "name": "Entities Audience Entered",
+      "type": "specificEvent",
+      "partnerAction": "addToSegment",
+      "mapping": {
+        "person_id": {
+          "@path": "$.userId"
+        },
+        "email": {
+          "@if": {
+            "exists": {
+              "@path": "$.context.traits.email"
+            },
+            "then": {
+              "@path": "$.context.traits.email"
+            },
+            "else": {
+              "@path": "$.properties.email"
+            }
+          }
+        },
+        "segment_id": {
+          "@if": {
+            "exists": {
+              "@path": "$.context.personas.audience_settings.segmentId"
+            },
+            "then": {
+              "@path": "$.context.personas.audience_settings.segmentId"
+            },
+            "else": {
+              "@path": "$.context.personas.external_audience_id"
+            }
+          }
+        },
+        "enable_batching": true,
+        "batch_size": 1000,
+        "batch_keys": [
+          "segment_id"
+        ]
+      },
+      "eventSlug": "warehouse_audience_entered_track"
+    },
+    {
+      "name": "Entities Audience Exited",
+      "type": "specificEvent",
+      "partnerAction": "removeFromSegment",
+      "mapping": {
+        "person_id": {
+          "@path": "$.userId"
+        },
+        "email": {
+          "@if": {
+            "exists": {
+              "@path": "$.context.traits.email"
+            },
+            "then": {
+              "@path": "$.context.traits.email"
+            },
+            "else": {
+              "@path": "$.properties.email"
+            }
+          }
+        },
+        "segment_id": {
+          "@if": {
+            "exists": {
+              "@path": "$.context.personas.audience_settings.segmentId"
+            },
+            "then": {
+              "@path": "$.context.personas.audience_settings.segmentId"
+            },
+            "else": {
+              "@path": "$.context.personas.external_audience_id"
+            }
+          }
+        },
+        "enable_batching": true,
+        "batch_size": 1000,
+        "batch_keys": [
+          "segment_id"
+        ]
+      },
+      "eventSlug": "warehouse_audience_exited_track"
     }
   ]
 }

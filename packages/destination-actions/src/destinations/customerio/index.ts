@@ -15,11 +15,14 @@ import unsuppressPerson from './unsuppressPerson'
 import trackEvent from './trackEvent'
 import trackPageView from './trackPageView'
 import trackScreenView from './trackScreenView'
-import type { DestinationDefinition } from '@segment/actions-core'
-import type { Settings } from './generated-types'
+import addToSegment from './addToSegment'
+import removeFromSegment from './removeFromSegment'
+import type { AudienceDestinationDefinition } from '@segment/actions-core'
+import type { Settings, AudienceSettings } from './generated-types'
 import { AccountRegion, trackApiEndpoint } from './utils'
+import { createAudience, getAudience } from './segments'
 
-const destination: DestinationDefinition<Settings> = {
+const destination: AudienceDestinationDefinition<Settings, AudienceSettings> = {
   name: 'Actions Customerio',
   slug: 'actions-customerio',
   mode: 'cloud',
@@ -46,6 +49,12 @@ const destination: DestinationDefinition<Settings> = {
         type: 'string',
         choices: Object.values(AccountRegion).map((dc) => ({ label: dc, value: dc })),
         default: AccountRegion.US
+      },
+      appApiKey: {
+        description:
+          'Customer.io App API key. Required to automatically create a manual segment for each Engage audience; optional if you enter an existing segment ID on each audience. Only used to create and look up segments. This can be found on your [API Credentials page](https://fly.customer.io/settings/api_credentials?keyType=app).',
+        label: 'App API Key',
+        type: 'password'
       }
     },
     testAuthentication: (request) => {
@@ -58,6 +67,24 @@ const destination: DestinationDefinition<Settings> = {
       username: settings.siteId,
       password: settings.apiKey
     }
+  },
+
+  audienceFields: {
+    segmentId: {
+      label: 'Segment ID',
+      description:
+        'The numeric ID of an existing Customer.io manual segment to sync this audience to. If empty, a new manual segment named after the audience is created (requires an App API Key).',
+      type: 'string'
+    }
+  },
+
+  audienceConfig: {
+    mode: {
+      type: 'synced',
+      full_audience_sync: false
+    },
+    createAudience,
+    getAudience
   },
 
   actions: {
@@ -75,7 +102,9 @@ const destination: DestinationDefinition<Settings> = {
     suppressPerson,
     unsuppressPerson,
     reportDeliveryEvent,
-    reportContentEvent
+    reportContentEvent,
+    addToSegment,
+    removeFromSegment
   },
 
   presets: [
@@ -273,6 +302,34 @@ const destination: DestinationDefinition<Settings> = {
       },
       type: 'specificEvent',
       eventSlug: 'journeys_step_entered_track'
+    },
+    {
+      name: 'Audience Entered',
+      subscribe: 'event = "Audience Entered"',
+      partnerAction: 'addToSegment',
+      mapping: defaultValues(addToSegment.fields),
+      type: 'automatic'
+    },
+    {
+      name: 'Audience Exited',
+      subscribe: 'event = "Audience Exited"',
+      partnerAction: 'removeFromSegment',
+      mapping: defaultValues(removeFromSegment.fields),
+      type: 'automatic'
+    },
+    {
+      name: 'Entities Audience Entered',
+      partnerAction: 'addToSegment',
+      mapping: defaultValues(addToSegment.fields),
+      type: 'specificEvent',
+      eventSlug: 'warehouse_audience_entered_track'
+    },
+    {
+      name: 'Entities Audience Exited',
+      partnerAction: 'removeFromSegment',
+      mapping: defaultValues(removeFromSegment.fields),
+      type: 'specificEvent',
+      eventSlug: 'warehouse_audience_exited_track'
     }
   ],
 
