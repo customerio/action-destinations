@@ -14,6 +14,7 @@ export const eventProperties: Record<string, InputField> = {
     required: false,
     minimum: 2,
     maximum: 100,
-    default: 50
+    default: 50,
+    unsafe_hidden: true
   }
 }
